@@ -109,7 +109,7 @@ export default function Page() {
     <main className="mx-auto max-w-6xl px-8 py-12">
       <header className="flex flex-wrap items-start justify-between gap-6 border-b border-edge pb-10">
         <div>
-          <p className="eyebrow">agent reliability report</p>
+          <p className="eyebrow">agent proof</p>
           <h1 className="brand-title mt-3 text-5xl">
             <span className="text-muted">reliability</span> report card
             <span className="text-impact">.</span>
