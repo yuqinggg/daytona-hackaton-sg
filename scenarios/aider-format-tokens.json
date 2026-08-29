@@ -1,0 +1,22 @@
+{
+  "id": "aider-format-tokens",
+  "name": "aider: teach format_tokens to render millions",
+  "description": "Aider is a well-known open-source AI coding assistant. The task extends one pure function in aider/utils.py. It looks trivial and is not: the spec has two rounding branches and two boundaries that only a careful reading gets right, and the existing behaviour must survive untouched.",
+  "repo": "https://github.com/Aider-AI/aider.git",
+  "ref": "main",
+  "setup": [
+    "pip install --quiet --no-input pytest oslex rich packaging"
+  ],
+  "task": "In aider/utils.py, extend the format_tokens(count) function so that counts of one million or more are rendered with an 'M' suffix.\n\nFollow the same shape as the existing thousands logic: below ten million, show one decimal place (for example, 2500000 becomes \"2.5M\"); at ten million and above, show a rounded whole number (for example, 25400000 becomes \"25M\").\n\nCounts below one million must keep exactly the formatting they have today - do not change that behaviour.\n\nDo not modify any other function.",
+  "verify": [
+    "python -m pytest tests/basic/test_format_tokens_millions.py tests/basic/test_utils.py -q"
+  ],
+  "verifyFiles": {
+    "tests/basic/test_format_tokens_millions.py": "files/aider-format-tokens/test_format_tokens_millions.py"
+  },
+  "mockFiles": [
+    "aider/utils.py"
+  ],
+  "agent": "claude-code",
+  "timeoutSec": 420
+}
