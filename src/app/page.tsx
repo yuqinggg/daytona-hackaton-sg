@@ -115,6 +115,47 @@ export default function Page() {
         </p>
       </header>
 
+      <div className="sticky top-0 z-20 -mx-2 mb-5 border-b border-[var(--color-edge)] bg-[var(--color-canvas)]/95 px-2 pt-2 backdrop-blur">
+        <div
+          role="tablist"
+          aria-label="Test case source"
+          className="flex gap-1"
+        >
+          <button
+            id="built-in-test-tab"
+            type="button"
+            role="tab"
+            aria-selected={!customTestEnabled}
+            aria-controls="built-in-test-panel"
+            disabled={!!busy}
+            onClick={() => setCustomTestEnabled(false)}
+            className={`border-b-2 px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
+              !customTestEnabled
+                ? "border-[var(--color-live)] text-[var(--color-ink)]"
+                : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+            }`}
+          >
+            Built-in test
+          </button>
+          <button
+            id="custom-test-tab"
+            type="button"
+            role="tab"
+            aria-selected={customTestEnabled}
+            aria-controls="custom-test-panel"
+            disabled={!!busy}
+            onClick={() => setCustomTestEnabled(true)}
+            className={`border-b-2 px-4 py-3 text-sm font-semibold transition-colors disabled:opacity-40 ${
+              customTestEnabled
+                ? "border-[var(--color-live)] text-[var(--color-ink)]"
+                : "border-transparent text-[var(--color-muted)] hover:text-[var(--color-ink)]"
+            }`}
+          >
+            Build your test case
+          </button>
+        </div>
+      </div>
+
       <RunControls
         scenarios={scenarios}
         scenarioId={scenarioId}
@@ -128,12 +169,30 @@ export default function Page() {
         archivedId={archivedId}
         setArchivedId={setArchivedId}
         onReplay={replay}
-        customTestEnabled={customTestEnabled}
-        onToggleCustomTest={() => setCustomTestEnabled((enabled) => !enabled)}
         startDisabled={!customTestReady}
       />
 
-      {customTestEnabled && <CustomTestForm value={customTest} onChange={setCustomTest} />}
+      {customTestEnabled ? (
+        <div
+          id="custom-test-panel"
+          role="tabpanel"
+          aria-labelledby="custom-test-tab"
+        >
+          <CustomTestForm value={customTest} onChange={setCustomTest} />
+        </div>
+      ) : (
+        <section
+          id="built-in-test-panel"
+          role="tabpanel"
+          aria-labelledby="built-in-test-tab"
+          className="mt-5 rounded-2xl border border-[var(--color-edge)] bg-[var(--color-panel)] p-5"
+        >
+          <h2 className="text-lg font-semibold text-[var(--color-ink)]">Built-in test</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
+            Run the ready-made reliability test for the selected agent. No setup is required.
+          </p>
+        </section>
+      )}
 
       {error && (
         <p className="mt-4 rounded-lg bg-[var(--color-fail)]/10 p-3 text-sm text-[var(--color-fail)]">

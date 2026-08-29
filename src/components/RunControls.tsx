@@ -16,8 +16,6 @@ export function RunControls({
   archivedId,
   setArchivedId,
   onReplay,
-  customTestEnabled,
-  onToggleCustomTest,
   startDisabled,
 }: {
   scenarios: Scenario[];
@@ -32,8 +30,6 @@ export function RunControls({
   archivedId: string;
   setArchivedId: (v: string) => void;
   onReplay: () => void;
-  customTestEnabled: boolean;
-  onToggleCustomTest: () => void;
   startDisabled: boolean;
 }) {
   return (
@@ -68,16 +64,6 @@ export function RunControls({
           className="w-20 rounded-lg border border-[var(--color-edge)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-ink)]"
         />
       </label>
-
-      <button
-        type="button"
-        onClick={onToggleCustomTest}
-        disabled={busy}
-        aria-pressed={customTestEnabled}
-        className="rounded-lg border border-[var(--color-edge)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-live)] disabled:opacity-40"
-      >
-        {customTestEnabled ? "Use built-in test" : "Add your test case"}
-      </button>
 
       {busy ? (
         <button
