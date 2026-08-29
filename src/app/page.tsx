@@ -106,13 +106,22 @@ export default function Page() {
 
   return (
     <main className="mx-auto max-w-6xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Agent Reliability Report Card</h1>
-        <p className="mt-2 max-w-2xl text-[var(--color-muted)]">
-          Your agent worked when you demoed it. Does it work 10 times in a row?
-          Pick an agent, run it on 10 separate machines, and see how often it
-          actually succeeds - and how it fails when it doesn't.
-        </p>
+      <header className="mb-8 flex items-start gap-4">
+        <img
+          src="/logo.png"
+          alt=""
+          width={56}
+          height={56}
+          className="mt-0.5 h-14 w-14 shrink-0 rounded-full"
+        />
+        <div>
+          <h1 className="text-3xl font-bold">Agent Reliability Report Card</h1>
+          <p className="mt-2 max-w-2xl text-[var(--color-muted)]">
+            Your agent worked when you demoed it. Does it work 10 times in a row?
+            Pick an agent, run it on 10 separate machines, and see how often it
+            actually succeeds - and how it fails when it doesn't.
+          </p>
+        </div>
       </header>
 
       <div className="sticky top-0 z-20 -mx-2 mb-5 border-b border-[var(--color-edge)] bg-[var(--color-canvas)]/95 px-2 pt-2 backdrop-blur">

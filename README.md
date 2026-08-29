@@ -53,6 +53,39 @@ Headless, if the browser lets you down:
 MOCK=1 npm run bench -- --trials 10
 ```
 
+## Deploy
+
+This app must run as **one long-lived container**. Do not deploy it as
+serverless functions: a run continues in the background after `POST /api/runs`
+returns, its state lives in the Node process, and progress is delivered over a
+long-lived SSE connection.
+
+The included `Dockerfile` builds Next.js in standalone mode and runs it as a
+non-root user. To verify the production image locally:
+
+```bash
+cp .env.example .env.local
+# Fill in the credentials, or leave MOCK=1 for a no-spend deployment.
+docker compose up --build
+curl --fail http://localhost:3000/api/health
+```
+
+For Render, Railway, Fly.io, or another container host, deploy the repository's
+`Dockerfile` and configure the variables from `.env.example` in the host's
+secret manager. At minimum, a live run needs:
+
+- `DAYTONA_API_KEY`
+- the provider key required by the selected scenario (the shipped Aider and
+  goose scenarios use `OPENROUTER_API_KEY`)
+- `DAYTONA_TARGET`, `RELIABILITY_CONCURRENCY`, and
+  `RELIABILITY_TRIAL_TIMEOUT` with values appropriate for the account
+
+Set the health-check path to `/api/health`, keep the instance count at **one**,
+and allow requests/SSE connections to remain open for at least the configured
+trial timeout. Mount persistent storage at `/app/runs` if completed run
+archives need to survive a redeploy. Never commit `.env.local`; it is excluded
+from both Git and the Docker build context.
+
 ## How it works
 
 ```
