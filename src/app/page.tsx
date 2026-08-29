@@ -18,7 +18,7 @@ export default function Page() {
   const [run, setRun] = useState<Run | null>(null);
   const [selected, setSelected] = useState<Trial | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [customTestEnabled, setCustomTestEnabled] = useState(false);
+  const [customTestEnabled, setCustomTestEnabled] = useState(true);
   const [customTest, setCustomTest] = useState(EMPTY_CUSTOM_TEST);
   const esRef = useRef<EventSource | null>(null);
 

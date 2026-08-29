@@ -45,7 +45,7 @@ export function CustomTestForm({
     <section className="mt-5 rounded-2xl border border-[var(--color-live)]/35 bg-[var(--color-panel)] p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold text-[var(--color-ink)]">Your test case</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-ink)]">Add your test case</h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
             Tell the agent what to change, then provide a deterministic test that proves whether
             it worked.
