@@ -9,7 +9,8 @@
     "start": "next start",
     "bench": "tsx src/scripts/bench.ts",
     "typecheck": "tsc --noEmit",
-    "smoke": "tsx src/scripts/smoke.ts"
+    "smoke": "tsx src/scripts/smoke.ts",
+    "budget": "tsx src/scripts/budget.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

@@ -57,7 +57,18 @@ export const ScenarioSchema = z.object({
   mockFiles: z.array(z.string()).default([]),
 
   /** Which agent to run. See src/lib/agent-runner.ts. */
-  agent: z.enum(["claude-code", "shell-agent"]).default("claude-code"),
+  agent: z.enum(["claude-code", "aider", "goose", "shell-agent"]).default("claude-code"),
+
+  /**
+   * Model handed to the agent-under-test, written provider-first:
+   * `<provider>/<model>`. Aider takes the whole string (it is litellm's
+   * format); the goose runner splits it into GOOSE_PROVIDER + GOOSE_MODEL.
+   * Claude Code ignores it and uses its own default.
+   *
+   * Pin it so a comparison run changes the agent and nothing else - two
+   * agents on two different models measures neither.
+   */
+  model: z.string().default("openrouter/qwen/qwen3-coder"),
 
   /** Per-trial wall clock, seconds. */
   timeoutSec: z.number().int().positive().default(420),

@@ -17,17 +17,22 @@ export function ReportCard({ report }: { report: RunReport }) {
       <div className="flex flex-wrap items-baseline gap-6">
         <div className="text-8xl font-bold tabular-nums leading-none">{pct}%</div>
         <div className="text-lg text-[var(--color-muted)]">
-          success rate
+          of runs that finished
           <div className="text-sm">
             {report.passed} passed &middot; {report.failed} failed
-            {report.errored > 0 && ` · ${report.errored} infra errors (excluded)`}
           </div>
+          {report.errored > 0 && (
+            <div className="mt-1 text-sm text-[var(--color-warn)]">
+              {report.errored} {report.errored === 1 ? "run" : "runs"} left out of the score -
+              our setup or the model provider broke, not the agent
+            </div>
+          )}
         </div>
       </div>
 
       {worst && (
         <p className="mt-6 text-2xl">
-          Most common failure:{" "}
+          When it failed, most often it{" "}
           <span className="font-semibold text-[var(--color-fail)]">
             {modeLabel(worst.mode)}
           </span>
@@ -37,7 +42,9 @@ export function ReportCard({ report }: { report: RunReport }) {
       <FailureBreakdown report={report} />
 
       <p className="mt-6 text-sm text-[var(--color-muted)]">
-        median trial {(report.medianDurationMs / 1000).toFixed(1)}s
+        A typical run took {(report.medianDurationMs / 1000).toFixed(1)}s.
+        {report.total < 20 &&
+          ` With only ${report.total} runs, treat this percentage as a rough signal - the failure reasons below are the reliable part.`}
       </p>
     </section>
   );
@@ -49,6 +56,7 @@ function FailureBreakdown({ report }: { report: RunReport }) {
 
   return (
     <div className="mt-8 space-y-3">
+      <p className="text-sm text-[var(--color-muted)]">Why the failed runs failed</p>
       {report.buckets.map((b) => (
         <div key={b.mode} className="flex items-center gap-4">
           <div className="w-64 shrink-0 text-right text-sm">{modeLabel(b.mode)}</div>

@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Agent Reliability Report Card",
-  description: "Run one agent task 50 times in 50 isolated sandboxes. Get a number.",
+  description:
+    "Run the same coding task 10 times, each on its own throwaway machine. See how often your agent succeeds - and how it fails when it doesn't.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,3 +1,4 @@
+import { AIDER_BIN, GOOSE_BIN, env } from "./env";
 import type { Scenario } from "./scenario";
 import type { SandboxHandle } from "./sandbox";
 
@@ -20,6 +21,8 @@ export async function runAgent(
   scenario: Scenario,
 ): Promise<AgentResult> {
   if (scenario.agent === "claude-code") return runClaudeCode(box, scenario);
+  if (scenario.agent === "aider") return runAider(box, scenario);
+  if (scenario.agent === "goose") return runGoose(box, scenario);
   return runShellAgent(box, scenario);
 }
 
@@ -63,6 +66,113 @@ async function runClaudeCode(
     { cwd: box.repoDir, timeoutSec: scenario.timeoutSec },
   );
   return { exitCode: res.exitCode, transcript: res.output };
+}
+
+/**
+ * Aider, the open-source pair-programmer, in headless one-shot mode.
+ *
+ * The venv is created by the scenario's `setup`, not here: a pip failure is
+ * the harness's fault, and setup failures are already classified as
+ * infra_error rather than counted against the agent.
+ *
+ * Aider commits by default. `--no-auto-commits` keeps its edits in the
+ * working tree, which is where `verify` looks - and it keeps the trial honest,
+ * since an agent that committed would otherwise look identical to one that
+ * did not.
+ */
+async function runAider(box: SandboxHandle, scenario: Scenario): Promise<AgentResult> {
+  const probe = await box.exec(`command -v ${AIDER_BIN} || command -v aider || true`, {
+    cwd: box.homeDir,
+    timeoutSec: 30,
+  });
+  const bin = probe.output.trim().split("\n").pop()?.trim();
+  if (!bin) {
+    return {
+      exitCode: 127,
+      transcript: "aider not found - the scenario's setup step must install it",
+    };
+  }
+
+  // Aider refuses to touch a repo with no git identity, and the sandbox has
+  // none. This configures the harness's own clone, not the agent's behaviour.
+  await box.exec(
+    'git config user.email harness@example.com && git config user.name "reliability harness"',
+    { cwd: box.repoDir, timeoutSec: 30 },
+  );
+
+  // Identity-linked keys need a workspace header on every request. Claude Code
+  // reads ANTHROPIC_CUSTOM_HEADERS; aider goes through litellm, which only
+  // takes extra headers from this file.
+  if (env.anthropicWorkspaceId) {
+    await box.writeFile(
+      `${box.homeDir}/.aider.model.settings.yml`,
+      `- name: ${scenario.model}\n` +
+        `  extra_params:\n` +
+        `    extra_headers:\n` +
+        `      anthropic-workspace-id: ${env.anthropicWorkspaceId}\n`,
+    );
+  }
+
+  await box.writeFile(`${box.homeDir}/task.md`, scenario.task);
+
+  const res = await box.exec(
+    [
+      bin,
+      `--model ${scenario.model}`,
+      `--message "$(cat ${box.homeDir}/task.md)"`,
+      "--yes-always",
+      "--no-auto-commits",
+      "--no-check-update",
+      "--no-pretty",
+    ].join(" "),
+    { cwd: box.repoDir, timeoutSec: scenario.timeoutSec },
+  );
+  return { exitCode: res.exitCode, transcript: res.output };
+}
+
+/**
+ * goose, Block's open-source agent, in headless `run` mode.
+ *
+ * Two things this needs that a laptop gives it for free:
+ *   1. A provider and model. goose normally reads these from an interactive
+ *      `goose configure`; the env vars are the headless equivalent.
+ *   2. Somewhere to put the API key. goose defaults to the system keyring,
+ *      which does not exist in a container - without GOOSE_DISABLE_KEYRING it
+ *      fails at startup on a secret store rather than on the task.
+ */
+async function runGoose(box: SandboxHandle, scenario: Scenario): Promise<AgentResult> {
+  const probe = await box.exec(`command -v ${GOOSE_BIN} || command -v goose || true`, {
+    cwd: box.homeDir,
+    timeoutSec: 30,
+  });
+  const bin = probe.output.trim().split("\n").pop()?.trim();
+  if (!bin) {
+    return {
+      exitCode: 127,
+      transcript: "goose not found - the scenario's setup step must install it",
+    };
+  }
+
+  const { provider, model } = splitModel(scenario.model);
+  await box.writeFile(`${box.homeDir}/task.md`, scenario.task);
+
+  const res = await box.exec(
+    `GOOSE_DISABLE_KEYRING=1 GOOSE_PROVIDER=${provider} GOOSE_MODEL=${model} ` +
+      `${bin} run --instructions ${box.homeDir}/task.md`,
+    { cwd: box.repoDir, timeoutSec: scenario.timeoutSec },
+  );
+  return { exitCode: res.exitCode, transcript: res.output };
+}
+
+/**
+ * `openrouter/qwen/qwen3-coder` -> provider `openrouter`, model
+ * `qwen/qwen3-coder`. Only the first segment is the provider; model names
+ * routinely contain slashes of their own.
+ */
+export function splitModel(spec: string): { provider: string; model: string } {
+  const slash = spec.indexOf("/");
+  if (slash === -1) return { provider: "anthropic", model: spec };
+  return { provider: spec.slice(0, slash), model: spec.slice(slash + 1) };
 }
 
 /**

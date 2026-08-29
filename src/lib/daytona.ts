@@ -1,5 +1,5 @@
 import { Daytona } from "@daytona/sdk";
-import { env } from "./env";
+import { agentProviderEnv, env } from "./env";
 import type { Scenario } from "./scenario";
 import type { ExecResult, SandboxHandle, SandboxProvider } from "./sandbox";
 
@@ -51,7 +51,7 @@ export const daytonaProvider: SandboxProvider = {
     // The agent-under-test needs its own credentials inside the box.
     const base = {
       envVars: {
-        ANTHROPIC_API_KEY: env.anthropicApiKey,
+        ...agentProviderEnv(),
         // Identity-linked keys need a workspace on every request. Set both:
         // the SDK reads ANTHROPIC_WORKSPACE_ID, and ANTHROPIC_CUSTOM_HEADERS
         // is the escape hatch the CLI honours regardless of SDK version.

@@ -6,12 +6,14 @@ import { RunControls } from "@/components/RunControls";
 import { SandboxGrid } from "@/components/SandboxGrid";
 import { TrialDrawer } from "@/components/TrialDrawer";
 import type { Scenario } from "@/lib/scenario";
-import type { Run, RunEvent, Trial } from "@/lib/types";
+import { DEFAULT_TRIALS, type Run, type RunEvent, type Trial } from "@/lib/types";
 
 export default function Page() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [archived, setArchived] = useState<Array<{ id: string; label: string }>>([]);
+  const [archivedId, setArchivedId] = useState("");
   const [scenarioId, setScenarioId] = useState("");
-  const [trials, setTrials] = useState(50);
+  const [trials, setTrials] = useState(DEFAULT_TRIALS);
   const [run, setRun] = useState<Run | null>(null);
   const [selected, setSelected] = useState<Trial | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +25,8 @@ export default function Page() {
       .then((d) => {
         setScenarios(d.scenarios ?? []);
         if (d.scenarios?.[0]) setScenarioId(d.scenarios[0].id);
+        setArchived(d.archived ?? []);
+        if (d.archived?.[0]) setArchivedId(d.archived[0].id);
       })
       .catch(() => setError("could not load scenarios"));
   }, []);
@@ -69,6 +73,21 @@ export default function Page() {
     attach(data.run.id);
   };
 
+  /** Show a recorded run. Spends nothing; works with no network. */
+  const replay = async () => {
+    setError(null);
+    setRun(null);
+    const res = await fetch("/api/runs/replay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: archivedId }),
+    });
+    const data = await res.json();
+    if (!res.ok) return setError(data.error ?? "replay failed");
+    setRun(data.run);
+    attach(data.run.id);
+  };
+
   const abort = async () => {
     if (run) await fetch(`/api/runs/${run.id}`, { method: "DELETE" });
   };
@@ -80,8 +99,10 @@ export default function Page() {
     <main className="mx-auto max-w-6xl px-8 py-10">
       <header className="mb-8">
         <h1 className="text-3xl font-bold">Agent Reliability Report Card</h1>
-        <p className="mt-2 text-[var(--color-muted)]">
-          Your agent worked when you demoed it. Does it work 50 times in a row?
+        <p className="mt-2 max-w-2xl text-[var(--color-muted)]">
+          Your agent worked when you demoed it. Does it work 10 times in a row?
+          Pick a task, run it on 10 separate machines, and see how often it
+          actually succeeds - and how it fails when it doesn't.
         </p>
       </header>
 
@@ -94,18 +115,58 @@ export default function Page() {
         onStart={start}
         onAbort={abort}
         busy={!!busy}
+        archived={archived}
+        archivedId={archivedId}
+        setArchivedId={setArchivedId}
+        onReplay={replay}
       />
 
-      {error && <p className="mt-4 text-sm text-[var(--color-fail)]">{error}</p>}
+      {error && (
+        <p className="mt-4 rounded-lg bg-[var(--color-fail)]/10 p-3 text-sm text-[var(--color-fail)]">
+          Couldn&apos;t start: {error}
+        </p>
+      )}
+
+      {!run && !error && (
+        <div className="mt-10 rounded-2xl border border-dashed border-[var(--color-edge)] p-8 text-[var(--color-muted)]">
+          <p className="text-[var(--color-ink)]">Nothing running yet.</p>
+          <p className="mt-2 max-w-xl text-sm">
+            Press <span className="text-[var(--color-ink)]">Run it {trials} times</span> and
+            each run gets its own throwaway machine, a fresh copy of the code,
+            and the same instructions. Nothing is shared between them, so one
+            run cannot help or break another. It takes a few minutes.
+          </p>
+        </div>
+      )}
 
       {run && (
         <>
-          <div className="mt-8 flex items-center justify-between text-sm text-[var(--color-muted)]">
-            <span>
-              {run.scenarioName} · {done}/{run.trialCount} complete
-              {run.mock && " · SIMULATED"}
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--color-muted)]">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-[var(--color-ink)]">{run.scenarioName}</span>
+              <span>
+                · {done} of {run.trialCount} finished
+              </span>
+              {run.mock && (
+                <span
+                  className="rounded border border-[var(--color-warn)] px-2 py-0.5 text-xs text-[var(--color-warn)]"
+                  title="Made-up results. No real machines and no real agent - practice mode."
+                >
+                  Simulated - not real results
+                </span>
+              )}
+              {run.replayOf && (
+                <span
+                  className="rounded border border-[var(--color-live)] px-2 py-0.5 text-xs text-[var(--color-live)]"
+                  title="These results really happened. Only the timing is sped up for playback."
+                >
+                  Replay of an earlier run
+                </span>
+              )}
             </span>
-            <span>concurrency {run.concurrency}</span>
+            <span title="How many machines run at the same time.">
+              {run.concurrency} at a time
+            </span>
           </div>
 
           <div className="mt-4">

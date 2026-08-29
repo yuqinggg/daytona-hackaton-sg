@@ -12,7 +12,7 @@
  */
 import "../lib/load-env";
 import { daytonaProvider } from "../lib/daytona";
-import { assertLiveCredentials, env } from "../lib/env";
+import { AIDER_BIN, GOOSE_BIN, assertLiveCredentials, env } from "../lib/env";
 import { listScenarios, loadScenario } from "../lib/scenario";
 import type { SandboxHandle } from "../lib/sandbox";
 
@@ -139,6 +139,81 @@ async function main() {
         ok("agent CLI accepted our flags and ran a real turn");
       } else {
         info(`agent flags parse; CLI exited ${flags.exitCode} (expected without a key): ${flags.output.trim().slice(0, 160)}`);
+      }
+    }
+
+    // 4c. Same check for aider: setup installed it, so confirm the binary
+    //     runs and that the flags this harness passes still parse. Aider's
+    //     CLI surface moves faster than Claude Code's, so this is the step
+    //     most likely to catch a break before it costs a full run.
+    if (scenario.agent === "aider") {
+      const t4 = Date.now();
+      const probe = await box.exec(`command -v ${AIDER_BIN} || command -v aider || true`, {
+        cwd: box.homeDir,
+        timeoutSec: 30,
+      });
+      const bin = probe.output.trim().split("\n").pop()?.trim() ?? "";
+
+      if (!bin) {
+        bad("aider not on PATH - check the venv install in scenario.setup");
+        failures++;
+      } else {
+        const v = await box.exec(`${bin} --version`, { cwd: box.homeDir, timeoutSec: 60 });
+        if (v.exitCode === 0) {
+          ok(`agent CLI ${v.output.trim().split("\n")[0]} ready in ${((Date.now() - t4) / 1000).toFixed(1)}s`);
+        } else {
+          bad(`agent CLI not runnable - ${v.output.trim().slice(0, 200)}`);
+          failures++;
+        }
+
+        // --exit makes aider start, parse everything, and quit without
+        // calling the model: flag validation for zero tokens.
+        const flags = await box.exec(
+          `${bin} --model ${scenario.model} --yes-always --no-auto-commits --no-check-update --no-pretty --exit`,
+          { cwd: box.repoDir, timeoutSec: 120 },
+        );
+        const out = flags.output.toLowerCase();
+        if (/unknown option|unrecognized|invalid (option|argument|choice)|no such option/.test(out)) {
+          bad(`agent CLI rejected our flags - ${flags.output.trim().slice(0, 300)}`);
+          failures++;
+        } else if (flags.exitCode === 0) {
+          ok("agent CLI accepted our flags");
+        } else {
+          info(`agent flags parse; CLI exited ${flags.exitCode}: ${flags.output.trim().slice(0, 160)}`);
+        }
+      }
+    }
+
+    // 4d. goose: confirm the binary installed and that `run --instructions`
+    //     still exists. There is no zero-token way to exercise a real turn,
+    //     so this checks the surface the runner depends on and no more.
+    if (scenario.agent === "goose") {
+      const t4 = Date.now();
+      const probe = await box.exec(`command -v ${GOOSE_BIN} || command -v goose || true`, {
+        cwd: box.homeDir,
+        timeoutSec: 30,
+      });
+      const bin = probe.output.trim().split("\n").pop()?.trim() ?? "";
+
+      if (!bin) {
+        bad("goose not on PATH - check the install script in scenario.setup");
+        failures++;
+      } else {
+        const v = await box.exec(`${bin} --version`, { cwd: box.homeDir, timeoutSec: 60 });
+        if (v.exitCode === 0) {
+          ok(`agent CLI ${v.output.trim().split("\n")[0]} ready in ${((Date.now() - t4) / 1000).toFixed(1)}s`);
+        } else {
+          bad(`agent CLI not runnable - ${v.output.trim().slice(0, 200)}`);
+          failures++;
+        }
+
+        const help = await box.exec(`${bin} run --help`, { cwd: box.homeDir, timeoutSec: 60 });
+        if (help.exitCode === 0 && /--instructions/.test(help.output)) {
+          ok("agent CLI accepts `run --instructions`");
+        } else {
+          bad(`goose run --instructions is gone - ${help.output.trim().slice(0, 300)}`);
+          failures++;
+        }
       }
     }
 

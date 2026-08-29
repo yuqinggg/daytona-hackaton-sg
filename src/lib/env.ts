@@ -21,6 +21,41 @@ export const env = {
 };
 
 /**
+ * Aider goes in its own venv rather than the sandbox's system Python. The
+ * scenario repo installs its own pinned test dependencies (aider itself pins
+ * rich and packaging), and letting pip resolve both sets together would let
+ * the agent's installer break the verifier's interpreter - a harness bug that
+ * would show up as an agent failure.
+ */
+export const AIDER_VENV = "$HOME/.aider-venv";
+export const AIDER_BIN = `${AIDER_VENV}/bin/aider`;
+
+/** Where goose's official install script puts the binary. */
+export const GOOSE_BIN = "$HOME/.local/bin/goose";
+
+/**
+ * Model-provider keys forwarded into every sandbox, whichever are set.
+ *
+ * The agent-under-test picks its own provider, so the harness must not hard-
+ * code one: an allowlist keeps unrelated host environment out of the sandbox
+ * while letting a scenario point at any provider its agent supports.
+ */
+export const AGENT_PROVIDER_KEYS = [
+  "ANTHROPIC_API_KEY",
+  "OPENROUTER_API_KEY",
+  "OPENAI_API_KEY",
+  "DEEPSEEK_API_KEY",
+  "GEMINI_API_KEY",
+  "GROQ_API_KEY",
+] as const;
+
+export function agentProviderEnv(): Record<string, string> {
+  return Object.fromEntries(
+    AGENT_PROVIDER_KEYS.map((k) => [k, process.env[k] ?? ""]).filter(([, v]) => v),
+  );
+}
+
+/**
  * @param needsAgentKey - false for checks that never run the agent (the
  * environment pre-flight), so a missing Anthropic key doesn't block the one
  * test that could still tell you something useful.
@@ -29,7 +64,10 @@ export function assertLiveCredentials(needsAgentKey = true) {
   if (env.mock) return;
   const missing: string[] = [];
   if (!env.daytonaApiKey) missing.push("DAYTONA_API_KEY");
-  if (needsAgentKey && !env.anthropicApiKey) missing.push("ANTHROPIC_API_KEY");
+  // Any provider key will do - which one is right depends on scenario.model.
+  if (needsAgentKey && Object.keys(agentProviderEnv()).length === 0) {
+    missing.push(`one of ${AGENT_PROVIDER_KEYS.join(", ")}`);
+  }
   if (missing.length) {
     throw new Error(
       `Missing ${missing.join(", ")}. Set them in .env.local, or run with MOCK=1.`,

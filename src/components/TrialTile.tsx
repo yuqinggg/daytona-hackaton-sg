@@ -1,5 +1,6 @@
 "use client";
 
+import { statusLabel } from "@/lib/labels";
 import type { Trial } from "@/lib/types";
 
 const TILE_CLASS: Record<Trial["status"], string> = {
@@ -17,11 +18,11 @@ export function TrialTile({ trial, onSelect }: { trial: Trial; onSelect: (t: Tri
   return (
     <button
       onClick={() => onSelect(trial)}
-      title={`#${trial.index} - ${trial.status}${trial.reason ? ` - ${trial.reason}` : ""}`}
+      title={`Run ${trial.index + 1} - ${statusLabel(trial.status)}${trial.reason ? `: ${trial.reason}` : ""}. Click for details.`}
       className={`aspect-square rounded-md transition-colors duration-300 ${TILE_CLASS[trial.status]} hover:ring-2 hover:ring-white/40`}
     >
       <span className="sr-only">
-        Trial {trial.index}: {trial.status}
+        Run {trial.index + 1}: {statusLabel(trial.status)}. Click for details.
       </span>
     </button>
   );

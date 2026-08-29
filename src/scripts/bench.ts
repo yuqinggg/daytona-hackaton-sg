@@ -2,14 +2,15 @@
  * Headless runner. The insurance policy: if Next.js, the browser, or the
  * projector betrays you, this prints the same report card to a terminal.
  *
- *   npm run bench -- --scenario express-add-endpoint --trials 50
- *   MOCK=1 npm run bench -- --trials 20
+ *   npm run bench -- --scenario express-add-endpoint --trials 10
+ *   MOCK=1 npm run bench -- --trials 5
  */
 import "../lib/load-env";
 import { loadScenario, listScenarios } from "../lib/scenario";
 import { startRun } from "../lib/orchestrator";
 import { modeLabel } from "../lib/labels";
 import { getRun, subscribe } from "../lib/store";
+import { DEFAULT_TRIALS } from "../lib/types";
 
 function arg(name: string, fallback?: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
@@ -21,12 +22,13 @@ async function main() {
   if (!scenarioId) throw new Error("No scenarios found in ./scenarios");
 
   const scenario = await loadScenario(scenarioId);
-  const trials = Number(arg("trials", "50"));
+  const trials = Number(arg("trials", String(DEFAULT_TRIALS)));
   const concurrency = arg("concurrency") ? Number(arg("concurrency")) : undefined;
 
-  console.log(`\n  ${scenario.name}\n  ${trials} trials\n`);
-
   const run = startRun({ scenario, trials, concurrency });
+
+  // startRun clamps to MAX_TRIALS, so report what will actually run.
+  console.log(`\n  ${scenario.name}\n  ${run.trialCount} trials\n`);
 
   await new Promise<void>((resolve) => {
     subscribe(run.id, (event) => {

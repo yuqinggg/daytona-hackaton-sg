@@ -60,8 +60,9 @@ Verified live, not assumed - `npm run smoke` against the Daytona default sandbox
 | python / pip | 3.14.4 / 26.0.1 |
 | node / npm | 25.9.0 / 11.12.1 |
 | `claude` CLI | 2.1.19, **preinstalled** |
+| `aider` / `goose` | neither preinstalled - each scenario installs its own |
 
-Four things this changed, each of which would have failed all 50 trials
+Four things this changed, each of which would have failed every trial
 identically:
 
 1. **No custom image.** Naming one triggers a *declarative build*, which 403s
@@ -79,14 +80,37 @@ identically:
    preinstalled `claude` and falls back to `npm install -g --prefix
    $HOME/.npm-global`.
 
-## Known sharp edges## Known sharp edges
+## Why the agent is a seam too
+
+`scenario.agent` selects a runner; `scenario.model` names the provider and
+model. Neither the orchestrator nor the classifier knows which agent ran, which
+is what makes a head-to-head run meaningful: swap the agent, hold the repo,
+task, verifier, and model fixed, and the two report cards differ by exactly one
+thing.
+
+Three constraints the runners exist to absorb, each found by `npm run smoke`
+rather than guessed:
+
+- **Aider commits by default.** `--no-auto-commits` keeps its edits in the
+  working tree, which is where `verify` looks.
+- **goose wants a system keyring.** Without `GOOSE_DISABLE_KEYRING=1` it fails
+  at startup hunting a secret store no container has - a failure that would
+  look like the agent's fault in every tile.
+- **Aider shares an interpreter with the repo under test.** Both pin `rich` and
+  `packaging`, so aider installs into `$HOME/.aider-venv` and leaves the
+  verifier's Python alone.
+
+## Known sharp edges
 
 - **The Daytona SDK calls in `daytona.ts` are verified live** - create, exec,
   uploadFile, delete all exercised by `npm run smoke`. The agent's own model
   call is the one step no smoke test covers.
 - **`concurrency` is a hard constraint, not a preference.** Daytona quota and the
-  Anthropic rate limit both bite well before 50 simultaneous agents.
-- **`shell-agent` in `agent-runner.ts` is a stub** that exits 1. Only
-  `claude-code` is wired up.
+  model provider's rate limit both bite well before 10 simultaneous agents.
+- **`shell-agent` in `agent-runner.ts` is a stub** that exits 1. `claude-code`,
+  `aider`, and `goose` are wired up.
+- **Aider's and goose's CLI surfaces move faster than Claude Code's.** `npm run
+  smoke` parses their flags for one sandbox and zero tokens; run it after a
+  version bump, before a full run.
 - **Sandbox cleanup is best-effort** in a `finally`. If the process is killed
   mid-run, sandboxes leak and cost money - check the Daytona dashboard after.

@@ -1,5 +1,5 @@
 import { runAgent } from "./agent-runner";
-import { heuristicClassify } from "./classify";
+import { heuristicClassify, isProviderFault } from "./classify";
 import type { Scenario } from "./scenario";
 import type { SandboxHandle, SandboxProvider } from "./sandbox";
 import { updateTrial } from "./store";
@@ -69,6 +69,18 @@ export async function runTrial(
     const diff = await box.exec("git diff --name-only HEAD", { cwd: box.repoDir, timeoutSec: 30 });
     const filesChanged = diff.output.split("\n").map((s) => s.trim()).filter(Boolean);
     updateTrial(runId, id, { filesChanged });
+
+    // Checked before agent_crash: the provider dying is not the agent
+    // crashing, and on a free tier it is the single likeliest way a trial
+    // ends. `errored` keeps it out of the denominator and amber on the grid.
+    if (agent.exitCode !== 0 && isProviderFault(agent.transcript)) {
+      return finish({
+        status: "errored",
+        failureMode: "infra_error",
+        reason: "model provider refused the request (rate limit or credit)",
+        logTail: tail(agent.transcript),
+      });
+    }
 
     if (agent.exitCode !== 0 && filesChanged.length === 0) {
       return finish({

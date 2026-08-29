@@ -1,21 +1,23 @@
 import { randomUUID } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { daytonaProvider } from "./daytona";
 import { assertLiveCredentials, env } from "./env";
 import { mockProvider } from "./mock";
 import { buildReport } from "./report";
 import type { Scenario } from "./scenario";
 import type { SandboxProvider } from "./sandbox";
-import { createRun, publish, updateRun } from "./store";
+import { createRun, getRun, publish, updateRun } from "./store";
 import { runTrial } from "./trial";
-import type { Run, Trial } from "./types";
+import { DEFAULT_TRIALS, MAX_TRIALS, type Run, type Trial } from "./types";
 
 /**
  * Fans one task out across N isolated sandboxes and keeps `concurrency` of
  * them in flight until every trial is terminal.
  *
  * Concurrency is a real limit, not a knob for show: Daytona quota and the
- * Anthropic rate limit both bite well before 50 simultaneous agents. The grid
- * still renders all 50 tiles from the start, so the audience sees the full
+ * Anthropic rate limit both bite well before 10 simultaneous agents. The grid
+ * still renders all 10 tiles from the start, so the audience sees the full
  * experiment while the pool works through it.
  */
 
@@ -35,7 +37,12 @@ export interface StartRunOptions {
 export function startRun(opts: StartRunOptions): Run {
   assertLiveCredentials();
 
-  const trialCount = opts.trials ?? 50;
+  // Clamped here rather than at the API edge so bench.ts and any future
+  // caller inherit the same ceiling.
+  const trialCount = Math.min(
+    Math.max(1, Math.floor(opts.trials ?? DEFAULT_TRIALS)),
+    MAX_TRIALS,
+  );
   const runId = randomUUID().slice(0, 8);
 
   const trials: Trial[] = Array.from({ length: trialCount }, (_, index) => ({
@@ -103,4 +110,26 @@ async function execute(run: Run, scenario: Scenario, signal: AbortSignal) {
 
   const report = await buildReport(run.trials);
   updateRun(run.id, { report, status: "completed", finishedAt: Date.now() });
+  await archiveRun(run.id);
+}
+
+/**
+ * Write the finished run to `runs/<id>.json`.
+ *
+ * The store is deliberately in-memory, which is fine until a run costs a whole
+ * day's free-tier request budget - then losing it to a dev-server restart is
+ * unaffordable. This is the cheapest possible durability: one file, no schema,
+ * no database, and it doubles as the input for `npm run replay`.
+ */
+async function archiveRun(runId: string) {
+  const run = getRun(runId);
+  if (!run) return;
+  try {
+    const dir = path.join(process.cwd(), "runs");
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, `${run.id}.json`), JSON.stringify(run, null, 2));
+  } catch {
+    // A run you can see on screen but cannot archive is still a run. Never
+    // let a disk error take down a finished measurement.
+  }
 }

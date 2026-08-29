@@ -17,6 +17,14 @@ export type TrialStatus =
 export const TERMINAL_STATUSES: TrialStatus[] = ["passed", "failed", "errored"];
 
 /**
+ * How many trials one run may fan out to. The cap is a spend guard as much as
+ * a UI one: every trial is a real sandbox and a real agent's worth of tokens,
+ * so the orchestrator clamps to it no matter what the caller asks for.
+ */
+export const MAX_TRIALS = 10;
+export const DEFAULT_TRIALS = 10;
+
+/**
  * The failure taxonomy. `other` is the escape hatch the LLM classifier uses
  * when nothing fits; a demo where everything lands in `other` means the
  * taxonomy needs a new bucket, not that the classifier is broken.
@@ -96,6 +104,8 @@ export interface Run {
   trials: Trial[];
   report?: RunReport;
   mock: boolean;
+  /** Set when this run is a replay of an archived one. Never hide this. */
+  replayOf?: string;
 }
 
 /** What the SSE endpoint pushes to the grid. */

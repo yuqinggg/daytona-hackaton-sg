@@ -23,7 +23,28 @@ interface Guess {
   reason: string;
 }
 
+/**
+ * A model provider refusing to serve us is infrastructure, exactly like a
+ * failed clone. It has to be caught before every other rule: a 429 mid-run
+ * leaves a half-finished edit that looks precisely like a wrong answer, and
+ * scoring it as one would let a rate limit masquerade as an unreliable agent.
+ *
+ * This matters most on a free tier, where 429 is the *expected* outcome rather
+ * than an anomaly.
+ */
+const PROVIDER_FAULT =
+  /\b(402|429)\b|insufficient credits|rate.?limit|quota exceeded|too many requests|overloaded_error|upstream_429|no endpoints found|provider returned error/i;
+
+export function isProviderFault(log: string): boolean {
+  return PROVIDER_FAULT.test(log);
+}
+
 const RULES: Array<{ mode: FailureMode; re: RegExp; reason: string }> = [
+  {
+    mode: "infra_error",
+    re: PROVIDER_FAULT,
+    reason: "the model provider refused the request (rate limit or credit)",
+  },
   {
     mode: "missing_dependency",
     re: /cannot find module|ModuleNotFoundError|No module named|ImportError|is not recognized as|command not found|unresolved import/i,
