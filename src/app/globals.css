@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/*
+ * Projector-first palette: near-black background, saturated pass/fail, big
+ * type. A conference projector eats contrast - everything here is louder than
+ * it needs to be on a laptop, on purpose.
+ */
+@theme {
+  --color-canvas: #0a0b0e;
+  --color-panel: #14161b;
+  --color-edge: #23262e;
+  --color-ink: #e8eaf0;
+  --color-muted: #8b909e;
+
+  --color-pass: #22c55e;
+  --color-fail: #ef4444;
+  --color-warn: #f59e0b;
+  --color-live: #38bdf8;
+  --color-idle: #2a2e37;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.tile-live {
+  animation: pulse-live 1.1s ease-in-out infinite;
+}

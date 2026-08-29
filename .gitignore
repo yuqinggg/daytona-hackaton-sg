@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+.env
+.env.local
+.env*.local
+
+# Local run artifacts. Anchored to the repo root: a bare `runs/` also matches
+# src/app/api/runs/ and silently drops the API routes from the repo.
+/runs/
+*.log
+.DS_Store
+.vscode/
+.idea/
+tsconfig.tsbuildinfo
