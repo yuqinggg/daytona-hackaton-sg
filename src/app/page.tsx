@@ -7,14 +7,14 @@ import { RunControls } from "@/components/RunControls";
 import { SandboxGrid } from "@/components/SandboxGrid";
 import { TrialDrawer } from "@/components/TrialDrawer";
 import type { Scenario } from "@/lib/scenario";
-import { DEFAULT_TRIALS, type Run, type RunEvent, type Trial } from "@/lib/types";
+import type { Run, RunEvent, Trial } from "@/lib/types";
 
 export default function Page() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [archived, setArchived] = useState<Array<{ id: string; label: string }>>([]);
   const [archivedId, setArchivedId] = useState("");
   const [scenarioId, setScenarioId] = useState("");
-  const [trials, setTrials] = useState(DEFAULT_TRIALS);
+  const [trials, setTrials] = useState<number | null>(null);
   const [run, setRun] = useState<Run | null>(null);
   const [selected, setSelected] = useState<Trial | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,6 @@ export default function Page() {
       .then((r) => r.json())
       .then((d) => {
         setScenarios(d.scenarios ?? []);
-        if (d.scenarios?.[0]) setScenarioId(d.scenarios[0].id);
         setArchived(d.archived ?? []);
         if (d.archived?.[0]) setArchivedId(d.archived[0].id);
       })
@@ -63,6 +62,7 @@ export default function Page() {
   useEffect(() => () => esRef.current?.close(), []);
 
   const start = async () => {
+    if (!scenarioId || trials == null) return;
     setError(null);
     setRun(null);
     const res = await fetch("/api/runs", {
@@ -103,6 +103,7 @@ export default function Page() {
   const done = run?.trials.filter((t) => ["passed", "failed", "errored"].includes(t.status)).length ?? 0;
   const customTestReady =
     !customTestEnabled || Object.values(customTest).every((value) => value.trim().length > 0);
+  const selectionReady = Boolean(scenarioId) && trials != null && trials >= 1;
 
   return (
     <main className="mx-auto max-w-6xl px-8 py-10">
@@ -178,7 +179,7 @@ export default function Page() {
         archivedId={archivedId}
         setArchivedId={setArchivedId}
         onReplay={replay}
-        startDisabled={!customTestReady}
+        startDisabled={!customTestReady || !selectionReady}
       />
 
       {customTestEnabled ? (
@@ -213,7 +214,7 @@ export default function Page() {
         <div className="mt-10 rounded-2xl border border-dashed border-[var(--color-edge)] p-8 text-[var(--color-muted)]">
           <p className="text-[var(--color-ink)]">Nothing running yet.</p>
           <p className="mt-2 max-w-xl text-sm">
-            Press <span className="text-[var(--color-ink)]">Run it {trials} times</span> and
+            Press <span className="text-[var(--color-ink)]">Run it</span> and
             each run gets its own throwaway machine, a fresh copy of the code,
             and the same instructions. Nothing is shared between them, so one
             run cannot help or break another. It takes a few minutes.
