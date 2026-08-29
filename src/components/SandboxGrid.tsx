@@ -17,14 +17,16 @@ export function SandboxGrid({
   onSelect: (t: Trial) => void;
 }) {
   return (
-    <div>
+    <div className="rounded-2xl border border-edge bg-panel p-5">
+      <p className="eyebrow mb-4">live runs</p>
+
       <div className="grid grid-cols-10 gap-2">
         {trials.map((t) => (
           <TrialTile key={t.id} trial={t} onSelect={onSelect} />
         ))}
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--color-muted)]">
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-edge pt-4 text-xs text-muted">
         {LEGEND.map((l) => (
           <span key={l.label} className="flex items-center gap-2" title={l.help}>
             <span className={`h-3 w-3 rounded-sm ${l.className}`} aria-hidden="true" />

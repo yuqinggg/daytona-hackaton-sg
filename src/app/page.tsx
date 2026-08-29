@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BrandMark } from "@/components/BrandMark";
 import { CustomTestForm, EMPTY_CUSTOM_TEST } from "@/components/CustomTestForm";
 import { ReportCard } from "@/components/ReportCard";
 import { RunControls } from "@/components/RunControls";
@@ -105,47 +106,56 @@ export default function Page() {
     !customTestEnabled || Object.values(customTest).every((value) => value.trim().length > 0);
 
   return (
-    <main className="mx-auto max-w-6xl px-8 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Agent Reliability Report Card</h1>
-        <p className="mt-2 max-w-2xl text-[var(--color-muted)]">
-          Your agent worked when you demoed it. Does it work 10 times in a row?
-          Pick an agent, run it on 10 separate machines, and see how often it
-          actually succeeds - and how it fails when it doesn't.
-        </p>
+    <main className="mx-auto max-w-6xl px-8 py-12">
+      <header className="flex flex-wrap items-start justify-between gap-6 border-b border-edge pb-10">
+        <div>
+          <p className="eyebrow">agent reliability report</p>
+          <h1 className="brand-title mt-3 text-5xl">
+            <span className="text-muted">reliability</span> report card
+            <span className="text-impact">.</span>
+          </h1>
+          <p className="mt-4 max-w-2xl text-muted">
+            Your agent worked when you demoed it. Does it work 10 times in a row?
+            Pick an agent, run it on 10 separate machines, and see how often it
+            actually succeeds - and how it fails when it doesn&apos;t.
+          </p>
+        </div>
+        <BrandMark size={72} />
       </header>
 
-      <RunControls
-        scenarios={scenarios}
-        scenarioId={scenarioId}
-        setScenarioId={setScenarioId}
-        trials={trials}
-        setTrials={setTrials}
-        onStart={start}
-        onAbort={abort}
-        busy={!!busy}
-        archived={archived}
-        archivedId={archivedId}
-        setArchivedId={setArchivedId}
-        onReplay={replay}
-        customTestEnabled={customTestEnabled}
-        onToggleCustomTest={() => setCustomTestEnabled((enabled) => !enabled)}
-        startDisabled={!customTestReady}
-      />
+      <div className="mt-8">
+        <RunControls
+          scenarios={scenarios}
+          scenarioId={scenarioId}
+          setScenarioId={setScenarioId}
+          trials={trials}
+          setTrials={setTrials}
+          onStart={start}
+          onAbort={abort}
+          busy={!!busy}
+          archived={archived}
+          archivedId={archivedId}
+          setArchivedId={setArchivedId}
+          onReplay={replay}
+          customTestEnabled={customTestEnabled}
+          onToggleCustomTest={() => setCustomTestEnabled((enabled) => !enabled)}
+          startDisabled={!customTestReady}
+        />
+      </div>
 
       {customTestEnabled && <CustomTestForm value={customTest} onChange={setCustomTest} />}
 
       {error && (
-        <p className="mt-4 rounded-lg bg-[var(--color-fail)]/10 p-3 text-sm text-[var(--color-fail)]">
+        <p className="mt-4 rounded-xl border border-fail/30 bg-fail/10 p-3 text-sm text-fail">
           Couldn&apos;t start: {error}
         </p>
       )}
 
       {!run && !error && (
-        <div className="mt-10 rounded-2xl border border-dashed border-[var(--color-edge)] p-8 text-[var(--color-muted)]">
-          <p className="text-[var(--color-ink)]">Nothing running yet.</p>
-          <p className="mt-2 max-w-xl text-sm">
-            Press <span className="text-[var(--color-ink)]">Run it {trials} times</span> and
+        <div className="mt-8 rounded-2xl border border-dashed border-edge p-8 text-muted">
+          <p className="eyebrow">nothing running yet</p>
+          <p className="mt-3 max-w-xl text-sm">
+            Press <span className="text-ink">Run it {trials} times</span> and
             each run gets its own throwaway machine, a fresh copy of the code,
             and the same instructions. Nothing is shared between them, so one
             run cannot help or break another. It takes a few minutes.
@@ -155,15 +165,15 @@ export default function Page() {
 
       {run && (
         <>
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--color-muted)]">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-3 text-sm text-muted">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="text-[var(--color-ink)]">{run.scenarioName}</span>
+              <span className="text-ink">{run.scenarioName}</span>
               <span>
                 · {done} of {run.trialCount} finished
               </span>
               {run.mock && (
                 <span
-                  className="rounded border border-[var(--color-warn)] px-2 py-0.5 text-xs text-[var(--color-warn)]"
+                  className="rounded-full border border-warn px-3 py-0.5 text-xs text-warn"
                   title="Made-up results. No real machines and no real agent - practice mode."
                 >
                   Simulated - not real results
@@ -171,7 +181,7 @@ export default function Page() {
               )}
               {run.replayOf && (
                 <span
-                  className="rounded border border-[var(--color-live)] px-2 py-0.5 text-xs text-[var(--color-live)]"
+                  className="rounded-full border border-impact/60 px-3 py-0.5 text-xs text-impact"
                   title="These results really happened. Only the timing is sped up for playback."
                 >
                   Replay of an earlier run
@@ -188,7 +198,7 @@ export default function Page() {
           </div>
 
           {run.report && (
-            <div className="mt-10">
+            <div className="mt-8">
               <ReportCard report={run.report} />
             </div>
           )}

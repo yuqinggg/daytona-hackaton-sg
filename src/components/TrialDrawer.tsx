@@ -12,11 +12,12 @@ export function TrialDrawer({ trial, onClose }: { trial: Trial | null; onClose: 
   if (!trial) return null;
 
   return (
-    <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l border-[var(--color-edge)] bg-[var(--color-panel)] shadow-2xl">
-      <header className="flex items-center justify-between border-b border-[var(--color-edge)] px-6 py-4">
+    <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col border-l border-edge bg-panel shadow-2xl">
+      <header className="flex items-center justify-between border-b border-edge px-6 py-4">
         <div>
-          <h2 className="text-lg font-semibold">Run {trial.index + 1}</h2>
-          <p className="text-sm text-[var(--color-muted)]">
+          <p className="eyebrow">run detail</p>
+          <h2 className="brand-heading mt-1 text-lg">Run {trial.index + 1}</h2>
+          <p className="text-sm text-muted">
             {statusLabel(trial.status)}
             {trial.durationMs ? ` · took ${(trial.durationMs / 1000).toFixed(1)}s` : ""}
             {trial.sandboxId ? ` · machine ${trial.sandboxId}` : ""}
@@ -24,7 +25,7 @@ export function TrialDrawer({ trial, onClose }: { trial: Trial | null; onClose: 
         </div>
         <button
           onClick={onClose}
-          className="rounded px-2 py-1 text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-live)]"
+          className="rounded-lg border border-edge px-3 py-1.5 text-sm text-muted transition-colors hover:border-impact/50 hover:text-ink"
         >
           Close
         </button>
@@ -32,15 +33,15 @@ export function TrialDrawer({ trial, onClose }: { trial: Trial | null; onClose: 
 
       <div className="flex-1 space-y-6 overflow-y-auto px-6 py-5 text-sm">
         {trial.reason && (
-          <div className="rounded-lg bg-[var(--color-fail)]/10 p-4 text-[var(--color-fail)]">
-            <p className="mb-1 text-xs uppercase tracking-wide opacity-70">Why this run ended</p>
+          <div className="rounded-xl border border-fail/30 bg-fail/10 p-4 text-fail">
+            <p className="eyebrow mb-1 text-fail">why this run ended</p>
             <p>{trial.reason}</p>
           </div>
         )}
 
         {trial.filesChanged && trial.filesChanged.length > 0 && (
           <div>
-            <h3 className="mb-2 text-[var(--color-muted)]">Files the agent edited</h3>
+            <h3 className="eyebrow mb-2">files the agent edited</h3>
             <ul className="space-y-1 font-mono text-xs">
               {trial.filesChanged.map((f) => (
                 <li key={f}>{f}</li>
@@ -50,8 +51,8 @@ export function TrialDrawer({ trial, onClose }: { trial: Trial | null; onClose: 
         )}
 
         <div>
-          <h3 className="mb-2 text-[var(--color-muted)]">What happened, step by step</h3>
-          <ol className="space-y-1 text-xs text-[var(--color-muted)]">
+          <h3 className="eyebrow mb-2">what happened, step by step</h3>
+          <ol className="space-y-1 text-xs text-muted">
             {trial.history.map((h, i) => (
               <li key={i}>
                 <span className="font-mono">{new Date(h.at).toLocaleTimeString()}</span>{" "}
@@ -64,8 +65,8 @@ export function TrialDrawer({ trial, onClose }: { trial: Trial | null; onClose: 
 
         {trial.logTail && (
           <div>
-            <h3 className="mb-2 text-[var(--color-muted)]">Test output from this machine</h3>
-            <pre className="overflow-x-auto rounded-lg bg-black/40 p-4 font-mono text-xs leading-relaxed">
+            <h3 className="eyebrow mb-2">test output from this machine</h3>
+            <pre className="overflow-x-auto rounded-xl border border-edge bg-canvas p-4 font-mono text-xs leading-relaxed">
               {trial.logTail}
             </pre>
           </div>

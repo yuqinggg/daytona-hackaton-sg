@@ -17,3 +17,6 @@ next-env.d.ts
 .vscode/
 .idea/
 tsconfig.tsbuildinfo
+
+# Linked Vercel project - contains project/org IDs, not meant to be shared.
+.vercel/

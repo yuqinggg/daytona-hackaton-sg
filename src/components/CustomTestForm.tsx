@@ -39,25 +39,25 @@ export function CustomTestForm({
   };
 
   const fieldClass =
-    "mt-1 w-full rounded-lg border border-[var(--color-edge)] bg-[var(--color-canvas)] px-3 py-2 text-sm text-[var(--color-ink)] placeholder:text-[var(--color-muted)]/60";
+    "mt-1 w-full rounded-lg border border-edge bg-canvas px-3 py-2 text-sm text-ink transition-colors placeholder:text-muted/60 focus:border-impact/60";
 
   return (
-    <section className="mt-5 rounded-2xl border border-[var(--color-live)]/35 bg-[var(--color-panel)] p-5">
+    <section className="mt-5 rounded-2xl border border-dashed border-impact/40 bg-panel p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-semibold text-[var(--color-ink)]">Your test case</h2>
-          <p className="mt-1 max-w-2xl text-sm text-[var(--color-muted)]">
+          <h2 className="brand-heading text-lg">Your test case</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">
             Tell the agent what to change, then provide a deterministic test that proves whether
             it worked.
           </p>
         </div>
-        <span className="rounded border border-[var(--color-live)] px-2 py-1 text-xs text-[var(--color-live)]">
+        <span className="rounded-full border border-impact/60 px-3 py-1 text-xs font-semibold text-impact">
           Hidden from the agent
         </span>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_12rem]">
-        <label className="text-sm text-[var(--color-muted)]">
+        <label className="text-sm text-muted">
           Repository URL
           <input
             type="url"
@@ -67,7 +67,7 @@ export function CustomTestForm({
             className={fieldClass}
           />
         </label>
-        <label className="text-sm text-[var(--color-muted)]">
+        <label className="text-sm text-muted">
           Branch or tag
           <input
             value={value.ref}
@@ -78,7 +78,7 @@ export function CustomTestForm({
         </label>
       </div>
 
-      <label className="mt-4 block text-sm text-[var(--color-muted)]">
+      <label className="mt-4 block text-sm text-muted">
         What should the agent change?
         <textarea
           value={value.task}
@@ -90,7 +90,7 @@ export function CustomTestForm({
       </label>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <label className="text-sm text-[var(--color-muted)]">
+        <label className="text-sm text-muted">
           Test file location
           <input
             value={value.testPath}
@@ -100,7 +100,7 @@ export function CustomTestForm({
           />
           <span className="mt-1 block text-xs">Where the file will be placed inside the repository.</span>
         </label>
-        <label className="text-sm text-[var(--color-muted)]">
+        <label className="text-sm text-muted">
           Command that runs the test
           <input
             value={value.verifyCommand}
@@ -114,10 +114,10 @@ export function CustomTestForm({
 
       <div className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <label htmlFor="custom-test-code" className="text-sm text-[var(--color-muted)]">
+          <label htmlFor="custom-test-code" className="text-sm text-muted">
             Test code
           </label>
-          <label className="cursor-pointer rounded-lg border border-[var(--color-edge)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink)] hover:border-[var(--color-live)]">
+          <label className="cursor-pointer rounded-lg border border-edge px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-impact">
             Upload a test file
             <input
               type="file"
@@ -136,7 +136,7 @@ export function CustomTestForm({
           spellCheck={false}
           className={`${fieldClass} resize-y font-mono`}
         />
-        <p className="mt-2 text-xs text-[var(--color-muted)]">
+        <p className="mt-2 text-xs text-muted">
           This file is copied into each fresh machine only after the agent finishes editing.
         </p>
       </div>

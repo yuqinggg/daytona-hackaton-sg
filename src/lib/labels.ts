@@ -58,26 +58,26 @@ export const LEGEND: Array<{ label: string; help: string; className: string }> =
   {
     label: "Passed",
     help: "The agent's change made the tests pass.",
-    className: "bg-[var(--color-pass)]",
+    className: "bg-pass",
   },
   {
     label: "Failed",
     help: "The agent finished, but the tests did not pass.",
-    className: "bg-[var(--color-fail)]",
+    className: "bg-fail",
   },
   {
     label: "Working",
     help: "Still running: starting up, editing, or testing.",
-    className: "bg-[var(--color-live)]",
+    className: "bg-stage-3",
   },
   {
     label: "Didn't count",
     help: "Our setup broke, or the model provider refused. Left out of the score.",
-    className: "bg-[var(--color-warn)]/40",
+    className: "bg-warn",
   },
   {
     label: "Not started",
     help: "Queued, waiting for a free slot.",
-    className: "bg-[var(--color-idle)]",
+    className: "bg-idle",
   },
 ];
