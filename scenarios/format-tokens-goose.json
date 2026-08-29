@@ -1,6 +1,6 @@
 {
   "id": "format-tokens-goose",
-  "name": "format_tokens millions - agent: goose",
+  "name": "Goose",
   "description": "The same task and the same verifier as the other format_tokens scenarios, so the only variable between their report cards is the agent. goose runs a full tool-using loop, so it explores the repo before editing.",
   "repo": "https://github.com/Aider-AI/aider.git",
   "ref": "main",

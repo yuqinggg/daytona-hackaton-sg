@@ -79,6 +79,21 @@ export type Scenario = z.infer<typeof ScenarioSchema> & {
   resolvedVerifyFiles: Array<{ remotePath: string; contents: string }>;
 };
 
+export const CustomTestInputSchema = z.object({
+  repo: z
+    .string()
+    .trim()
+    .url("Enter a valid repository URL.")
+    .refine((value) => /^https?:\/\//.test(value), "Use an HTTP or HTTPS repository URL."),
+  ref: z.string().trim().min(1, "Enter a branch or tag.").max(200),
+  task: z.string().trim().min(1, "Describe the change the agent should make.").max(20_000),
+  testPath: z.string().trim().min(1, "Enter where the test file should be placed.").max(500),
+  testContents: z.string().min(1, "Enter or upload at least one test case.").max(200_000),
+  verifyCommand: z.string().trim().min(1, "Enter the command that runs the test.").max(4_000),
+});
+
+export type CustomTestInput = z.infer<typeof CustomTestInputSchema>;
+
 const SCENARIO_DIR = path.join(process.cwd(), "scenarios");
 
 export async function loadScenario(id: string): Promise<Scenario> {
@@ -103,4 +118,57 @@ export async function listScenarios(): Promise<Scenario[]> {
   // the first entry is what a demo lands on by default.
   const files = (await readdir(SCENARIO_DIR)).filter((f) => f.endsWith(".json")).sort();
   return Promise.all(files.map((f) => loadScenario(path.basename(f, ".json"))));
+}
+
+/**
+ * Build an in-memory scenario from the custom test form.
+ *
+ * The selected built-in scenario supplies the agent and model only. The user
+ * supplies the repository, task, and hidden verifier. Test contents never go
+ * into the cloned repository until after the agent has finished.
+ */
+export function createCustomScenario(base: Scenario, input: unknown): Scenario {
+  const parsed = CustomTestInputSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid custom test.");
+  }
+
+  const testPath = path.posix.normalize(parsed.data.testPath);
+  if (
+    path.posix.isAbsolute(testPath) ||
+    testPath === "." ||
+    testPath === ".." ||
+    testPath.startsWith("../") ||
+    testPath.includes("\\") ||
+    testPath !== parsed.data.testPath
+  ) {
+    throw new Error("Test file path must be a safe path inside the repository.");
+  }
+
+  const setup =
+    base.agent === "aider"
+      ? [
+          "python -m venv $HOME/.aider-venv",
+          "$HOME/.aider-venv/bin/pip install --quiet --no-input aider-chat",
+        ]
+      : base.agent === "goose"
+        ? [
+            "curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash",
+          ]
+        : [];
+
+  return {
+    ...base,
+    id: `custom-${base.agent}`,
+    name: `Custom test · ${base.name}`,
+    description: "A user-defined task with a hidden deterministic test.",
+    repo: parsed.data.repo,
+    ref: parsed.data.ref,
+    setup,
+    task: parsed.data.task,
+    verify: [parsed.data.verifyCommand],
+    verifyFiles: {},
+    mockFiles: [],
+    resolvedVerifyFiles: [{ remotePath: testPath, contents: parsed.data.testContents }],
+  };
 }

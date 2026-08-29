@@ -1,6 +1,6 @@
 {
   "id": "format-tokens-aider",
-  "name": "format_tokens millions - agent: Aider",
+  "name": "Aider",
   "description": "The same task and the same verifier as the other format_tokens scenarios, so the only variable between their report cards is the agent. Aider is a headless one-shot edit: it takes the task, produces edit blocks, and exits.",
   "repo": "https://github.com/Aider-AI/aider.git",
   "ref": "main",

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import { listScenarios } from "./scenario";
 import { createRun, publish, updateRun, updateTrial } from "./store";
 import type { Run, Trial } from "./types";
 
@@ -21,6 +22,9 @@ const RUNS_DIR = () => path.join(process.cwd(), "runs");
 
 export async function listArchived(): Promise<Array<{ id: string; label: string }>> {
   try {
+    const scenarioNames = new Map(
+      (await listScenarios()).map((scenario) => [scenario.id, scenario.name]),
+    );
     const files = (await readdir(RUNS_DIR())).filter((f) => f.endsWith(".json")).sort();
     const out = await Promise.all(
       files.map(async (f) => {
@@ -28,9 +32,11 @@ export async function listArchived(): Promise<Array<{ id: string; label: string 
           const run: Run = JSON.parse(await readFile(path.join(RUNS_DIR(), f), "utf8"));
           const pct = run.report ? Math.round(run.report.successRate * 100) : null;
           const when = new Date(run.createdAt).toISOString().slice(0, 16).replace("T", " ");
+          const scenarioName =
+            scenarioNames.get(run.scenarioId) ?? run.scenarioName.replaceAll("_", " ");
           return {
             id: path.basename(f, ".json"),
-            label: `${run.scenarioName} - ${pct === null ? "no report" : `${pct}%`} - ${when}`,
+            label: `${scenarioName} · ${pct === null ? "No report" : `${pct}% success`} · ${when}`,
           };
         } catch {
           return null;

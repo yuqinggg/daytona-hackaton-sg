@@ -1,6 +1,6 @@
 {
   "id": "aider-format-tokens",
-  "name": "aider: teach format_tokens to render millions",
+  "name": "Claude Code",
   "description": "Aider is a well-known open-source AI coding assistant. The task extends one pure function in aider/utils.py. It looks trivial and is not: the spec has two rounding branches and two boundaries that only a careful reading gets right, and the existing behaviour must survive untouched.",
   "repo": "https://github.com/Aider-AI/aider.git",
   "ref": "main",

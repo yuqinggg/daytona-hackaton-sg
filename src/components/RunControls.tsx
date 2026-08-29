@@ -16,6 +16,9 @@ export function RunControls({
   archivedId,
   setArchivedId,
   onReplay,
+  customTestEnabled,
+  onToggleCustomTest,
+  startDisabled,
 }: {
   scenarios: Scenario[];
   scenarioId: string;
@@ -29,16 +32,19 @@ export function RunControls({
   archivedId: string;
   setArchivedId: (v: string) => void;
   onReplay: () => void;
+  customTestEnabled: boolean;
+  onToggleCustomTest: () => void;
+  startDisabled: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <label className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-        Task
+        Agent to test
         <select
           value={scenarioId}
           onChange={(e) => setScenarioId(e.target.value)}
           disabled={busy}
-          title="What the agent is asked to do, and which agent is asked to do it."
+          title="Which coding agent should perform the benchmark task."
           className="rounded-lg border border-[var(--color-edge)] bg-[var(--color-panel)] px-3 py-2 text-sm"
         >
           {scenarios.map((s) => (
@@ -63,6 +69,16 @@ export function RunControls({
         />
       </label>
 
+      <button
+        type="button"
+        onClick={onToggleCustomTest}
+        disabled={busy}
+        aria-pressed={customTestEnabled}
+        className="rounded-lg border border-[var(--color-edge)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-live)] disabled:opacity-40"
+      >
+        {customTestEnabled ? "Use built-in test" : "Add your test case"}
+      </button>
+
       {busy ? (
         <button
           onClick={onAbort}
@@ -74,7 +90,8 @@ export function RunControls({
       ) : (
         <button
           onClick={onStart}
-          className="rounded-lg bg-[var(--color-pass)] px-5 py-2 text-sm font-semibold text-black"
+          disabled={startDisabled}
+          className="rounded-lg bg-[var(--color-pass)] px-5 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-40"
           title={`Starts ${trials} fresh machines and gives each one the same task.`}
         >
           Run it {trials} times

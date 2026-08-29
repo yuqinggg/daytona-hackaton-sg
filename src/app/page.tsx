@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CustomTestForm, EMPTY_CUSTOM_TEST } from "@/components/CustomTestForm";
 import { ReportCard } from "@/components/ReportCard";
 import { RunControls } from "@/components/RunControls";
 import { SandboxGrid } from "@/components/SandboxGrid";
@@ -17,6 +18,8 @@ export default function Page() {
   const [run, setRun] = useState<Run | null>(null);
   const [selected, setSelected] = useState<Trial | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [customTestEnabled, setCustomTestEnabled] = useState(false);
+  const [customTest, setCustomTest] = useState(EMPTY_CUSTOM_TEST);
   const esRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -65,7 +68,11 @@ export default function Page() {
     const res = await fetch("/api/runs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ scenarioId, trials }),
+      body: JSON.stringify({
+        scenarioId,
+        trials,
+        customTest: customTestEnabled ? customTest : undefined,
+      }),
     });
     const data = await res.json();
     if (!res.ok) return setError(data.error ?? "failed to start");
@@ -94,6 +101,8 @@ export default function Page() {
 
   const busy = run?.status === "running";
   const done = run?.trials.filter((t) => ["passed", "failed", "errored"].includes(t.status)).length ?? 0;
+  const customTestReady =
+    !customTestEnabled || Object.values(customTest).every((value) => value.trim().length > 0);
 
   return (
     <main className="mx-auto max-w-6xl px-8 py-10">
@@ -101,7 +110,7 @@ export default function Page() {
         <h1 className="text-3xl font-bold">Agent Reliability Report Card</h1>
         <p className="mt-2 max-w-2xl text-[var(--color-muted)]">
           Your agent worked when you demoed it. Does it work 10 times in a row?
-          Pick a task, run it on 10 separate machines, and see how often it
+          Pick an agent, run it on 10 separate machines, and see how often it
           actually succeeds - and how it fails when it doesn't.
         </p>
       </header>
@@ -119,7 +128,12 @@ export default function Page() {
         archivedId={archivedId}
         setArchivedId={setArchivedId}
         onReplay={replay}
+        customTestEnabled={customTestEnabled}
+        onToggleCustomTest={() => setCustomTestEnabled((enabled) => !enabled)}
+        startDisabled={!customTestReady}
       />
+
+      {customTestEnabled && <CustomTestForm value={customTest} onChange={setCustomTest} />}
 
       {error && (
         <p className="mt-4 rounded-lg bg-[var(--color-fail)]/10 p-3 text-sm text-[var(--color-fail)]">

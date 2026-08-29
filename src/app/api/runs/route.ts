@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { startRun } from "@/lib/orchestrator";
-import { listScenarios, loadScenario } from "@/lib/scenario";
+import { createCustomScenario, listScenarios, loadScenario } from "@/lib/scenario";
 import { listArchived } from "@/lib/replay";
 import { listRuns } from "@/lib/store";
 import { DEFAULT_TRIALS } from "@/lib/types";
@@ -18,7 +18,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const scenario = await loadScenario(body.scenarioId);
+    const baseScenario = await loadScenario(body.scenarioId);
+    const scenario = body.customTest
+      ? createCustomScenario(baseScenario, body.customTest)
+      : baseScenario;
     const run = startRun({
       scenario,
       trials: body.trials ?? DEFAULT_TRIALS,

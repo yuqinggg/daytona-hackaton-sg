@@ -41,7 +41,7 @@ export async function runTrial(
     // flaky agent, which is exactly the lie this project exists to kill.
     updateTrial(runId, id, { status: "seeding" });
     const clone = await box.exec(
-      `git clone --depth 1 --branch ${scenario.ref} ${scenario.repo} ${box.repoDir}`,
+      `git clone --depth 1 --branch ${shellQuote(scenario.ref)} -- ${shellQuote(scenario.repo)} ${shellQuote(box.repoDir)}`,
       { cwd: box.homeDir, timeoutSec: 180 },
     );
     if (clone.exitCode !== 0) {
@@ -139,4 +139,9 @@ export async function runTrial(
 
 function tail(s: string): string {
   return s.length > LOG_TAIL_CHARS ? s.slice(-LOG_TAIL_CHARS) : s;
+}
+
+/** Quote user-supplied repository fields before passing them to the shell. */
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
